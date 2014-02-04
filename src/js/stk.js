@@ -1,4 +1,27 @@
 var Stk = (function() {
+  var tests = [ '{1 2} {1 2} = assert',
+                '{1 2 3} length 3 = assert',
+                '"hello" length 5 = assert',
+                '"" small assert',
+                '"a" small assert',
+                '"ab" small not assert',
+                '[] small assert',
+                '[1] small assert',
+                '[1 2] small not assert',
+                '{} small assert',
+                '{1} small assert',
+                '{1 2} small not assert',
+                '1 [1 =] [1 +] [2 +] ifte 2 = assert',
+                '1 [2 =] [1 +] [2 +] ifte 3 = assert',
+                '[dup * 1 +] 3 swap i 10 = assert',
+                '{1 2 3} [1 +] map {2 3 4} = assert',
+                '{1 2 3} 8 [+] fold 14 = assert',
+                '[dup * 1 +] [[1 +] [id] ifnumber] map 5 swap i 27 = assert',
+                '5 [ 1 = ] [ ] [ dup pred ] [ * ] linrec 120 = assert',
+                '5 [1] [*] primrec 120 = assert',
+                '12 [small] [] [pred dup pred] [+] binrec 144 = assert'
+               ];
+
   var stack = [];
 
   var push = function(e) {
@@ -831,21 +854,29 @@ var Stk = (function() {
     return convert_all_tokens(input);
   };
 
-  return {
-    stack: function() { return stack; },
-    fragment_to_string: fragment_to_string,
-    interpret_string: function(input, output) {
-      interpret( convert(input), output );
-    },
-    interpret_strings: function(array) {
-      var i;
-      for(i=0;i<array.length;i++) {
-        try {
-          this.interpret_string(array[i]);
-        } catch(e) {
-          console.error('Error '+i+': '+array[i]+' -> '+e.message);
-        }
+  var interpret_string = function(input, output) {
+    interpret( convert(input), output );
+  };
+
+  var interpret_strings = function(array) {
+    var i;
+    for(i=0;i<array.length;i++) {
+      try {
+        interpret_string(array[i]);
+      } catch(e) {
+        console.error('Error '+i+': '+array[i]+' -> '+e.message);
       }
     }
   };
+
+  interpret_strings(tests);
+
+  return {
+    stack: function() { return stack; },
+    fragment_to_string: fragment_to_string,
+    interpret_string: interpret_string,
+    interpret_strings: interpret_strings
+  };
+
+
 })();

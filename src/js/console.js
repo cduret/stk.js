@@ -22,29 +22,6 @@ var prelude = [': sum 0 [+] fold ;',
                ': transition {} cons cons cons {"transition"} swap concat ;'
               ];
 
-var tests = [ '{1 2} {1 2} = assert',
-              '{1 2 3} length 3 = assert',
-              '"hello" length 5 = assert',
-              '"" small assert',
-              '"a" small assert',
-              '"ab" small not assert',
-              '[] small assert',
-              '[1] small assert',
-              '[1 2] small not assert',
-              '{} small assert',
-              '{1} small assert',
-              '{1 2} small not assert',
-              '1 [1 =] [1 +] [2 +] ifte 2 = assert',
-              '1 [2 =] [1 +] [2 +] ifte 3 = assert',
-              '[dup * 1 +] 3 swap i 10 = assert',
-              '{1 2 3} [1 +] map {2 3 4} = assert',
-              '{1 2 3} 8 [+] fold 14 = assert',
-              '[dup * 1 +] [[1 +] [id] ifnumber] map 5 swap i 27 = assert',
-              '5 [ 1 = ] [ ] [ dup pred ] [ * ] linrec 120 = assert',
-              '5 [1] [*] primrec 120 = assert',
-              '12 [small] [] [pred dup pred] [+] binrec 144 = assert'
-             ];
-
 var print_stack = function(output) {
   var i;
   var stack = Stk.stack();
@@ -84,7 +61,6 @@ $(document).ready(function() {
   var jqc = $('#console').jqconsole(welcome+'\n\n', PS1);
 
   Stk.interpret_strings(prelude);
-  Stk.interpret_strings(tests);
 
   var handler = function(command) {
     if( command ) {
