@@ -871,6 +871,7 @@ var Stk = (function() {
 
   return {
     stack: function() { return stack; },
+    ops: ops,
     fragment_to_string: fragment_to_string,
     interpret_string: interpret_string,
     interpret_strings: interpret_strings,
