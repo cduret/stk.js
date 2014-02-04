@@ -100,18 +100,18 @@ var Stk = (function() {
   var dictionnary = {};
   var ops;
 
-  var interpret = function(fragments, output) {
+  var interpret = function(fragments, io) {
     if( !(fragments instanceof Array) ) {
-      return interpret([fragments], output);
+      return interpret([fragments], io);
     }
 
     var i;
 
     for(i=0;i<fragments.length;i++) {
       if( typeof(fragments[i]) === 'function' ) {
-        fragments[i](output);
+        fragments[i](io);
       } else if( fragments[i].reference ) {
-        interpret(fragments[i].reference, output);
+        interpret(fragments[i].reference, io);
       } else {
         push ( fragments[i] );
       }
@@ -301,7 +301,7 @@ var Stk = (function() {
         push( f );
       }
     },
-    ifte: function(output) {
+    ifte: function(io) {
       var f = pop();
       var t = pop();
       var q = pop();
@@ -311,7 +311,7 @@ var Stk = (function() {
         throw Error('elts must be quotations !');
       }
       push( q );
-      ops.i(output);
+      ops.i(io);
       var b = pop();
 
       if( typeof(b) !== 'boolean' ) {
@@ -326,7 +326,7 @@ var Stk = (function() {
         push( f );
       }
 
-      ops.i(output);
+      ops.i(io);
     },
     assert: function() {
       var a = pop();
@@ -376,9 +376,9 @@ var Stk = (function() {
       }
       push( --a );
     },
-    '.': function(output) {
+    '.': function(io) {
       var a = pop();
-      output.Write(fragment_to_string(a)+'\n', 'jqconsole-output');
+      io.write(fragment_to_string(a)+'\n');
     },
     id: function() {
     },
@@ -417,23 +417,23 @@ var Stk = (function() {
       push(y);
       push(x);
     },
-    dip: function(output) {
+    dip: function(io) {
       var q = pop();
       var x = pop();
       if( !q.quotation ) {
         throw Error('elt is not a quotation !');
       }
-      interpret(q.quotation, output);
+      interpret(q.quotation, io);
       push(x);
     },
-    i: function(output) {
+    i: function(io) {
       var q = pop();
       if( !q.quotation ) {
         throw Error('elt is not a quotation !');
       }
-      interpret(q.quotation, output);
+      interpret(q.quotation, io);
     },
-    nth: function(output) {
+    nth: function(io) {
       var q = pop();
       var n = pop();
       if( typeof(n) !== 'number' ) {
@@ -444,7 +444,7 @@ var Stk = (function() {
       }
       if( q.quotation ) {
         if( n < q.quotation.length ) {
-          interpret(q.quotation[n], output);
+          interpret(q.quotation[n], io);
         } else {
           throw Error('index out of range !');
         }
@@ -505,7 +505,7 @@ var Stk = (function() {
         push([a].concat(b));
       }
     },
-    uncons: function(output) { // faire uncons pour un string
+    uncons: function(io) { // faire uncons pour un string
       var first, rest, a = pop();
       if( !(a instanceof Array) && !a.quotation ) {
         throw Error('second elt should be a quotation or an array !');
@@ -516,7 +516,7 @@ var Stk = (function() {
         }
         first = a.quotation[0];
         rest = a.quotation.slice(1);
-        interpret(first, output);
+        interpret(first, io);
         push({ quotation: rest });
       } else if( a instanceof Array ) {
         if( a.length < 1 ) {
@@ -527,7 +527,7 @@ var Stk = (function() {
         push( a.slice(1) );
       }
     },
-    first: function(output) { // faire first pour un string
+    first: function(io) { // faire first pour un string
       var first, a = pop();
       if( !(a instanceof Array) && !a.quotation ) {
         throw Error('elt should be a quotation or an array !');
@@ -537,7 +537,7 @@ var Stk = (function() {
           throw Error('first on empty quotation !');
         }
         first = a.quotation[0];
-        interpret(first, output);
+        interpret(first, io);
       } else if( a instanceof Array ) {
         if( a.length < 1 ) {
           throw Error('first on empty array !');
@@ -546,7 +546,7 @@ var Stk = (function() {
         push( first );
       }
     }, // faire rest
-    map : function(output) {
+    map : function(io) {
       var i;
       var q = pop();
       var a = pop();
@@ -566,7 +566,7 @@ var Stk = (function() {
       for(i=0;i<array.length;i++) {
         push(array[i]);
         push(q);
-        ops.i(output);
+        ops.i(io);
         result.push(pop());
       }
       if( a instanceof Array ) {
@@ -575,7 +575,7 @@ var Stk = (function() {
         push({quotation: result});
       }
     },
-    fold : function(output) {
+    fold : function(io) {
       var i;
       var q = pop();
       var v0 = pop();
@@ -591,12 +591,12 @@ var Stk = (function() {
         push(v);
         push(a[i]);
         push(q);
-        ops.i(output);
+        ops.i(io);
         v = pop();
       }
       push(v);
     },
-    ifnumber: function(output) {
+    ifnumber: function(io) {
       var fq = pop();
       var tq = pop();
       var a = pop();
@@ -616,9 +616,9 @@ var Stk = (function() {
       } else {
         push( fq );
       }
-      ops.i(output);
+      ops.i(io);
     },
-    primrec: function(output) {
+    primrec: function(io) {
       var qc = pop();
       var qi = pop();
       var x = peek();
@@ -635,15 +635,15 @@ var Stk = (function() {
         x = x - 1;
         if(x === 0) {
           push(qi);
-          ops.i(output);
+          ops.i(io);
         } else {
           push( x );
         }
         push(qc);
-        ops.i(output);
+        ops.i(io);
       }
     },
-    linrec: function(output) {
+    linrec: function(io) {
       var qr2 = pop();
       var qr1 = pop();
       var qt = pop();
@@ -660,17 +660,17 @@ var Stk = (function() {
           case 0: {
               ops.dup();
               push(qp);
-              ops.i(output);
+              ops.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
                 throw Error('result of first quotation must be a boolean !');
               }
               if( b ) {
                 push(qt);
-                ops.i(output);
+                ops.i(io);
               } else {
                 push(qr1);
-                ops.i(output);
+                ops.i(io);
                 calls.push({stage:1});
                 calls.push({stage:0});
               }
@@ -678,13 +678,13 @@ var Stk = (function() {
             break;
           case 1: {
               push(qr2);
-              ops.i(output);
+              ops.i(io);
             }
             break;
         }
       }
     },
-    binrec: function(output) {
+    binrec: function(io) {
       var qr2 = pop();
       var qr1 = pop();
       var qt = pop();
@@ -706,19 +706,19 @@ var Stk = (function() {
               }
               ops.dup();
               push(qp);
-              ops.i(output);
+              ops.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
                 throw Error('result of first quotation must be a boolean !');
               }
               if( b ) {
                 push(qt);
-                ops.i(output);
+                ops.i(io);
                 result = pop();
                 continue;
               } else {
                 push(qr1);
-                ops.i(output);
+                ops.i(io);
                 calls.push({stage:1, input: pop()});
                 calls.push({stage:0});
               }
@@ -733,7 +733,7 @@ var Stk = (function() {
               push(result);
               push(cur.input);
               push(qr2);
-              ops.i(output);
+              ops.i(io);
               result = pop();
               continue;
             }
@@ -756,11 +756,11 @@ var Stk = (function() {
       return ['', -1];
     }
     while ( true ) {
-      if( !open && input.charAt(pos) === ' ' && result.length === 0 ) {
-        // skip whitespaces
+      if( !open && (input.charAt(pos) === ' ' || input.charAt(pos) === '\n') && result.length === 0 ) {
+        // skip whitespaces and return lines
         pos++;
         continue;
-      } else if( !open && (pos === input.length || input.charAt(pos) === ' ') ) {
+      } else if( !open && (pos === input.length || input.charAt(pos) === ' ' || input.charAt(pos) === '\n') ) {
         // end of token
         var new_pos = (pos === input.length)?-1:pos+1;
         return [result.join(''), new_pos];
@@ -803,66 +803,64 @@ var Stk = (function() {
     }
   };
 
-  var convert = function(input) {
-    var convert_all_tokens;
-    var convert_token = function(token) {
-      if( token.charAt(0) === '"' && token.charAt(token.length-1) === '"' ) {
-        return token.substring(1, token.length-1);
-      } else if( token.charAt(0) === '[' && token.charAt(token.length-1) === ']' ) {
-        return {quotation: convert_all_tokens(token.substring(1, token.length-1))};
-      } else if( token.charAt(0) === '{' && token.charAt(token.length-1) === '}' ) {
-        return convert_all_tokens(token.substring(1, token.length-1));
-      } else if( token === 't' ) {
-        return true;
-      } else if( token === 'f' ) {
-        return false;
-      } else if( !isNaN(token) ) {
-        return Number(token);
-      } else if( ops[token] ) {
-        return ops[token];
-      } else if( dictionnary[token] ) {
-        return dictionnary[token];
-      }
-    };
+  var lexer;
 
-    convert_all_tokens = function(input) {
-      var result = [];
-      var next = 0;
-      while ( next !== -1 ) {
-        var token = next_token(input, next);
-        if( token[0].length > 0 ) {
-          if( token[0].charAt(0) === ':' && token[0].charAt(token[0].length-1) === ';' ) {
-            var body = token[0].substring(1, token[0].length-1);
-            var name = next_token(body);
-            var ref = { reference: [] };
-            dictionnary[name[0]] = ref;
-            ref.reference = convert(body.substring(name[1], body.length-1));
+  var lex_token = function(token) {
+    if( token.charAt(0) === '"' && token.charAt(token.length-1) === '"' ) {
+      return token.substring(1, token.length-1);
+    } else if( token.charAt(0) === '[' && token.charAt(token.length-1) === ']' ) {
+      return {quotation: lexer(token.substring(1, token.length-1))};
+    } else if( token.charAt(0) === '{' && token.charAt(token.length-1) === '}' ) {
+      return lexer(token.substring(1, token.length-1));
+    } else if( token === 't' ) {
+      return true;
+    } else if( token === 'f' ) {
+      return false;
+    } else if( !isNaN(token) ) {
+      return Number(token);
+    } else if( ops[token] ) {
+      return ops[token];
+    } else if( dictionnary[token] ) {
+      return dictionnary[token];
+    }
+  };
+
+  lexer = function(input) {
+    var result = [];
+    var next = 0;
+    while ( next !== -1 ) {
+      var token = next_token(input, next);
+      var s = token[0].trim();
+      if( s.length > 0 ) {
+        if( s.charAt(0) === ':' && s.charAt(s.length-1) === ';' ) {
+          var body = s.substring(1, s.length-1);
+          var name = next_token(body);
+          var ref = { reference: [] };
+          dictionnary[name[0]] = ref;
+          ref.reference = lexer(body.substring(name[1], body.length-1));
+        } else {
+          var t = lex_token(s);
+          if( t !== undefined ) {
+            result.push(t);
           } else {
-            var t = convert_token(token[0]);
-            if( t !== undefined ) {
-              result.push(t);
-            } else {
-              throw Error('token '+token[0]+' not found !');
-            }
+            throw Error('token '+s+' not found !');
           }
         }
-        next = token[1];
       }
-      return result;
-    };
-
-    return convert_all_tokens(input);
+      next = token[1];
+    }
+    return result;
   };
 
-  var interpret_string = function(input, output) {
-    interpret( convert(input), output );
+  var interpret_string = function(code, io) {
+    interpret( lexer(code), io );
   };
 
-  var interpret_strings = function(array) {
+  var interpret_strings = function(array, io) {
     var i;
     for(i=0;i<array.length;i++) {
       try {
-        interpret_string(array[i]);
+        interpret_string(array[i], io);
       } catch(e) {
         console.error('Error '+i+': '+array[i]+' -> '+e.message);
       }
@@ -875,7 +873,9 @@ var Stk = (function() {
     stack: function() { return stack; },
     fragment_to_string: fragment_to_string,
     interpret_string: interpret_string,
-    interpret_strings: interpret_strings
+    interpret_strings: interpret_strings,
+    lexer: lexer,
+    lex_token: lex_token,
   };
 
 

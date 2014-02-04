@@ -62,10 +62,16 @@ $(document).ready(function() {
 
   Stk.interpret_strings(prelude);
 
+  var io = {
+    write: function(out) {
+      jqc.Write(out, 'jqconsole-output');
+    }
+  };
+
   var handler = function(command) {
     if( command ) {
       try {
-        Stk.interpret_string(command, jqc);
+        Stk.interpret_string(command, io);
         print_stack(jqc);
       } catch(e) {
         jqc.Write('ERROR: ' + e.message + '\n', 'jqconsole-error');
