@@ -1,6 +1,6 @@
 {
   "name": "stk.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "jquery": "~1.9",
     "jq-console": "2.8.0"
