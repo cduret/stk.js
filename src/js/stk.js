@@ -20,7 +20,7 @@ var Stk = (function() {
                 '5 [ 1 = ] [ ] [ dup pred ] [ * ] linrec 120 = assert',
                 '5 [1] [*] primrec 120 = assert',
                 '12 [small] [] [pred dup pred] [+] binrec 144 = assert'
-               ];
+               ].join('\n');
 
   var stack = [];
 
@@ -98,7 +98,7 @@ var Stk = (function() {
   };
 
   var dictionnary = {};
-  var ops;
+  var words;
 
   var interpret = function(fragments, io) {
     if( !(fragments instanceof Array) ) {
@@ -118,7 +118,7 @@ var Stk = (function() {
     }
   };
 
-  var fragment_to_string = function(e) {
+  var word_to_string = function(e) {
     var find_name = function(root, x) {
       var p;
       for(p in root) {
@@ -131,15 +131,15 @@ var Stk = (function() {
       return '???';
     };
     if( e.quotation ) {
-      return ['['].concat(e.quotation.map(fragment_to_string)).concat(']').join(' ');
+      return ['['].concat(e.quotation.map(word_to_string)).concat(']').join(' ');
     } else if( e.reference ) {
       return find_name(dictionnary, e);
     } else if( e instanceof Array ) {
-      return '{ '+e.map(fragment_to_string).join(' ')+' }';
+      return '{ '+e.map(word_to_string).join(' ')+' }';
     } else if( (typeof(e) === 'string') ) {
       return '"'+e+'"';
     } else if( (typeof(e) === 'function') ) {
-      return find_name(ops, e);
+      return find_name(words, e);
     } else if( (typeof(e) === 'boolean') ) {
       return e?'t':'f';
     } else {
@@ -147,7 +147,7 @@ var Stk = (function() {
     }
   };
 
-  ops = {
+  words = {
     'number?': function() {
       var a = pop();
       push( typeof(a) === 'number' );
@@ -311,7 +311,7 @@ var Stk = (function() {
         throw Error('elts must be quotations !');
       }
       push( q );
-      ops.i(io);
+      words.i(io);
       var b = pop();
 
       if( typeof(b) !== 'boolean' ) {
@@ -326,7 +326,7 @@ var Stk = (function() {
         push( f );
       }
 
-      ops.i(io);
+      words.i(io);
     },
     assert: function() {
       var a = pop();
@@ -378,7 +378,7 @@ var Stk = (function() {
     },
     '.': function(io) {
       var a = pop();
-      io.write(fragment_to_string(a)+'\n');
+      io.write(word_to_string(a)+'\n');
     },
     id: function() {
     },
@@ -566,7 +566,7 @@ var Stk = (function() {
       for(i=0;i<array.length;i++) {
         push(array[i]);
         push(q);
-        ops.i(io);
+        words.i(io);
         result.push(pop());
       }
       if( a instanceof Array ) {
@@ -591,7 +591,7 @@ var Stk = (function() {
         push(v);
         push(a[i]);
         push(q);
-        ops.i(io);
+        words.i(io);
         v = pop();
       }
       push(v);
@@ -616,7 +616,7 @@ var Stk = (function() {
       } else {
         push( fq );
       }
-      ops.i(io);
+      words.i(io);
     },
     primrec: function(io) {
       var qc = pop();
@@ -635,12 +635,12 @@ var Stk = (function() {
         x = x - 1;
         if(x === 0) {
           push(qi);
-          ops.i(io);
+          words.i(io);
         } else {
           push( x );
         }
         push(qc);
-        ops.i(io);
+        words.i(io);
       }
     },
     linrec: function(io) {
@@ -658,19 +658,19 @@ var Stk = (function() {
         var cur = calls.pop();
         switch(cur.stage) {
           case 0: {
-              ops.dup();
+              words.dup();
               push(qp);
-              ops.i(io);
+              words.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
                 throw Error('result of first quotation must be a boolean !');
               }
               if( b ) {
                 push(qt);
-                ops.i(io);
+                words.i(io);
               } else {
                 push(qr1);
-                ops.i(io);
+                words.i(io);
                 calls.push({stage:1});
                 calls.push({stage:0});
               }
@@ -678,7 +678,7 @@ var Stk = (function() {
             break;
           case 1: {
               push(qr2);
-              ops.i(io);
+              words.i(io);
             }
             break;
         }
@@ -704,21 +704,21 @@ var Stk = (function() {
               if( cur.input !== undefined ) {
                 push(cur.input);
               }
-              ops.dup();
+              words.dup();
               push(qp);
-              ops.i(io);
+              words.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
                 throw Error('result of first quotation must be a boolean !');
               }
               if( b ) {
                 push(qt);
-                ops.i(io);
+                words.i(io);
                 result = pop();
                 continue;
               } else {
                 push(qr1);
-                ops.i(io);
+                words.i(io);
                 calls.push({stage:1, input: pop()});
                 calls.push({stage:0});
               }
@@ -733,7 +733,7 @@ var Stk = (function() {
               push(result);
               push(cur.input);
               push(qr2);
-              ops.i(io);
+              words.i(io);
               result = pop();
               continue;
             }
@@ -798,6 +798,11 @@ var Stk = (function() {
         // end of definition
         open--;
         delimiters.pop();
+      } else if( pos >= input.length ) {
+        if( open ) {
+          throw Error('ending word of delimiter '+delimiters[delimiters.length-1]+' not found !');
+        }
+        throw Error('lexer error !');
       }
       result.push(input.charAt(pos++));
     }
@@ -818,8 +823,8 @@ var Stk = (function() {
       return false;
     } else if( !isNaN(token) ) {
       return Number(token);
-    } else if( ops[token] ) {
-      return ops[token];
+    } else if( words[token] ) {
+      return words[token];
     } else if( dictionnary[token] ) {
       return dictionnary[token];
     }
@@ -856,27 +861,27 @@ var Stk = (function() {
     interpret( lexer(code), io );
   };
 
-  var interpret_strings = function(array, io) {
+  var print_stack = function(io) {
     var i;
-    for(i=0;i<array.length;i++) {
-      try {
-        interpret_string(array[i], io);
-      } catch(e) {
-        console.error('Error '+i+': '+array[i]+' -> '+e.message);
+    if( stack.length > 0 ) {
+      io.write('Data stack ---\n');
+      for(i=0;i<stack.length;i++) {
+        io.write(word_to_string(stack[i])+'\n');
       }
     }
   };
 
-  interpret_strings(tests);
+  interpret_string(tests);
 
   return {
     stack: function() { return stack; },
-    ops: ops,
-    fragment_to_string: fragment_to_string,
-    interpret_string: interpret_string,
-    interpret_strings: interpret_strings,
+    print_stack: print_stack,
+    words: words,
+    word_to_string: word_to_string,
+    interpret: interpret_string,
     lexer: lexer,
     lex_token: lex_token,
+    next_token: next_token
   };
 
 

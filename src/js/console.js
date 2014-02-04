@@ -20,18 +20,7 @@ var prelude = [': sum 0 [+] fold ;',
                ': >>ry {} cons {"rx"} swap concat ;',
                ': >>rz {} cons {"rz"} swap concat ;',
                ': transition {} cons cons cons {"transition"} swap concat ;'
-              ];
-
-var print_stack = function(output) {
-  var i;
-  var stack = Stk.stack();
-  if( stack.length > 0 ) {
-    output.Write('Data stack ---\n', 'jqconsole-output');
-    for(i=0;i<stack.length;i++) {
-      output.Write(Stk.fragment_to_string(stack[i])+'\n', 'jqconsole-output');
-    }
-  }
-};
+              ].join('\n');
 
 var add_old_prompt_handlers = function(jqc) {
   var old = $('.jqconsole-old-prompt > span');
@@ -60,7 +49,7 @@ var add_old_prompt_handlers = function(jqc) {
 $(document).ready(function() {
   var jqc = $('#console').jqconsole(welcome+'\n\n', PS1);
 
-  Stk.interpret_strings(prelude);
+  Stk.interpret(prelude);
 
   var io = {
     write: function(out) {
@@ -71,8 +60,8 @@ $(document).ready(function() {
   var handler = function(command) {
     if( command ) {
       try {
-        Stk.interpret_string(command, io);
-        print_stack(jqc);
+        Stk.interpret(command, io);
+        Stk.print_stack(io);
       } catch(e) {
         jqc.Write('ERROR: ' + e.message + '\n', 'jqconsole-error');
       }
