@@ -12,6 +12,6 @@ dev tools required :
   - [bower](http://bower.io/) and 
   - [gruntjs](http://gruntjs.com/)
 
-$ npm install
-$ bower install
+$ npm install  
+$ bower install  
 $ grunt
