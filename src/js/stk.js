@@ -24,6 +24,11 @@ var Stk = (function() {
 
   var stack = [];
 
+  var dictionnary = {};
+
+  var words;
+
+
   var push = function(e) {
     stack.push(e);
   };
@@ -96,9 +101,6 @@ var Stk = (function() {
     }
     return false;
   };
-
-  var dictionnary = {};
-  var words;
 
   var interpret = function(fragments, io) {
     if( !(fragments instanceof Array) ) {
@@ -379,6 +381,15 @@ var Stk = (function() {
     '.': function(io) {
       var a = pop();
       io.write(word_to_string(a)+'\n');
+    },
+    '.s': function(io) {
+      var i;
+      if( stack.length > 0 ) {
+        io.write('Data stack ---\n');
+        for(i=0;i<stack.length;i++) {
+          io.write(word_to_string(stack[i])+'\n');
+        }
+      }
     },
     id: function() {
     },
@@ -861,21 +872,12 @@ var Stk = (function() {
     interpret( lexer(code), io );
   };
 
-  var print_stack = function(io) {
-    var i;
-    if( stack.length > 0 ) {
-      io.write('Data stack ---\n');
-      for(i=0;i<stack.length;i++) {
-        io.write(word_to_string(stack[i])+'\n');
-      }
-    }
-  };
-
   interpret_string(tests);
 
   return {
     stack: function() { return stack; },
-    print_stack: print_stack,
+    dictionnary: function() { return dictionnary; },
+    print_stack: words['.s'],
     words: words,
     word_to_string: word_to_string,
     interpret: interpret_string,

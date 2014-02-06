@@ -1,8 +1,10 @@
 {
   "name": "stk.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "dependencies": {
     "jquery": "~1.9",
-    "jq-console": "2.8.0"
+    "jq-console": "2.8.0",
+    "ace-builds": "1.1.1",
+    "markdown": "0.6.0-beta1"
   }
 }
