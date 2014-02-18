@@ -12,14 +12,14 @@ var welcome = ['        _____________    ',
 var prelude = [': sum 0 [+] fold ;',
                ': product 1 [*] fold ;',
                ': concatenation "" [concat] fold ;',
-               ': >>t {"t"} swap concat ;',
-               ': >>tx {} cons {"tx"} swap concat ;',
-               ': >>ty {} cons {"ty"} swap concat ;',
-               ': >>r {"r"} swap concat ;',
-               ': >>rx {} cons {"rx"} swap concat ;',
-               ': >>ry {} cons {"rx"} swap concat ;',
-               ': >>rz {} cons {"rz"} swap concat ;',
-               ': transition {} cons cons cons {"transition"} swap concat ;'
+               ': t>> {"t"} swap concat ;',
+               ': tx>> {} cons {"tx"} swap concat ;',
+               ': ty>> {} cons {"ty"} swap concat ;',
+               ': r>> {"r"} swap concat ;',
+               ': rx>> {} cons {"rx"} swap concat ;',
+               ': ry>> {} cons {"ry"} swap concat ;',
+               ': rz>> {} cons {"rz"} swap concat ;',
+               ': transition>> {} cons cons cons {"transition"} swap concat ;'
               ].join('\n');
 
 var add_old_prompt_handlers = function(jqc) {

@@ -2,7 +2,16 @@
 
 var prelude = [': sum 0 [+] fold ;',
                ': product 1 [*] fold ;',
-               ': concatenation "" [concat] fold ;'].join('\n');
+               ': concatenation "" [concat] fold ;',
+               ': t>> {"t"} swap concat ;',
+               ': tx>> {} cons {"tx"} swap concat ;',
+               ': ty>> {} cons {"ty"} swap concat ;',
+               ': r>> {"r"} swap concat ;',
+               ': rx>> {} cons {"rx"} swap concat ;',
+               ': ry>> {} cons {"ry"} swap concat ;',
+               ': rz>> {} cons {"rz"} swap concat ;',
+               ': transition>> {} cons cons cons {"transition"} swap concat ;'
+               ].join('\n');
 
 var cur_line = 0;
 var editors = [];
@@ -63,6 +72,8 @@ var setup_editor = function(line) {
     }
   });
 
+  // add ctrl-m for markdown text
+
   return editor;
 };
 
@@ -91,8 +102,42 @@ var setup_cell = function(id, edit, error) {
   }
 };
 
+/*
+var mouseX = function(evt) {
+  if (evt.pageX) {
+    return evt.pageX;
+  } else if (evt.clientX) {
+    return evt.clientX + (document.documentElement.scrollLeft ?
+        document.documentElement.scrollLeft :
+        document.body.scrollLeft);
+  } else {
+    return null;
+  }
+};
+
+var mouseY = function(evt) {
+  if (evt.pageY) {
+    return evt.pageY;
+  } else if (evt.clientY) {
+    return evt.clientY + (document.documentElement.scrollTop ?
+        document.documentElement.scrollTop :
+        document.body.scrollTop);
+  } else {
+    return null;
+  }
+};
+*/
+
 var add_prompt = function(line) {
   $('body').append( new_prompt(line) );
+
+  /*$('#'+line+'.prompt').click(function(e) {
+    var m = $('#menu');
+    m.removeClass('hide');
+    m.addClass('show');
+    m.css({top: mouseY(e), left: mouseX(e)});
+  });*/
+
   var editor = setup_editor(line);
   editor.focus();
   editors.push(editor);
@@ -156,6 +201,7 @@ var remove_cell = function(line) {
 };
 
 $(document).ready(function() {
+  Stk.words.clear();
   Stk.interpret(prelude);
 
   add_prompt(cur_line++);

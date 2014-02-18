@@ -49,24 +49,36 @@ var Stk = (function() {
   };
 
   var add = function() {
+    if( stack.length < 2 ) {
+      throw Error('Stack underflow');
+    }
     var a = stack.pop();
     var b = stack.pop();
     stack.push( a + b );
   };
 
   var sub = function() {
+    if( stack.length < 2 ) {
+      throw Error('Stack underflow');
+    }
     var b = stack.pop();
     var a = stack.pop();
     stack.push( a - b );
   };
 
   var mul = function() {
+    if( stack.length < 2 ) {
+      throw Error('Stack underflow');
+    }
     var a = stack.pop();
     var b = stack.pop();
     stack.push( a * b );
   };
 
   var div = function() {
+    if( stack.length < 2 ) {
+      throw Error('Stack underflow');
+    }
     var a = stack.pop();
     var b = stack.pop();
     stack.push( a / b );
@@ -767,55 +779,69 @@ var Stk = (function() {
       return ['', -1];
     }
     while ( true ) {
-      if( !open && (input.charAt(pos) === ' ' || input.charAt(pos) === '\n') && result.length === 0 ) {
-        // skip whitespaces and return lines
-        pos++;
-        continue;
-      } else if( !open && (pos === input.length || input.charAt(pos) === ' ' || input.charAt(pos) === '\n') ) {
-        // end of token
-        var new_pos = (pos === input.length)?-1:pos+1;
-        return [result.join(''), new_pos];
-      } else if ( !open && input.charAt(pos) === '"' ) {
-        // begin of string
-        open++;
-        delimiters.push('"');
-      } else if ( open && delimiters[delimiters.length-1] === '"' && input.charAt(pos) === '"' ) {
-        // end of string
-        open = 0;
-        delimiters.push('');
-      } else if ( input.charAt(pos) === '[' ) {
-        // begin of quotation
-        open++;
-        delimiters.push('[');
-      } else if ( open && delimiters[delimiters.length-1] === '[' && input.charAt(pos) === ']' ) {
-        // end of quotation
-        open--;
-        delimiters.pop();
-      } else if ( input.charAt(pos) === '{' ) {
-        // begin of array
-        open++;
-        delimiters.push('{');
-      } else if ( open && delimiters[delimiters.length-1] === '{' && input.charAt(pos) === '}' ) {
-        // end of array
-        open--;
-        delimiters.pop();
-      } else if ( input.charAt(pos) === ':' ) {
-        //if( pos !== 0 ) {
+      if( !delimiters.length || delimiters[delimiters.length-1] !== '(' ) {
+        if( !open && (input.charAt(pos) === ' ' || input.charAt(pos) === '\n') && result.length === 0 ) {
+          // skip whitespaces and return lines
+          pos++;
+          continue;
+        } else if( !open && (pos === input.length || input.charAt(pos) === ' ' || input.charAt(pos) === '\n') ) {
+          // end of token
+          var new_pos = (pos === input.length)?-1:pos+1;
+          return [result.join(''), new_pos];
+        } else if ( !open && input.charAt(pos) === '"' ) {
+          // begin of string
+          open++;
+          delimiters.push('"');
+        } else if ( open && delimiters[delimiters.length-1] === '"' && input.charAt(pos) === '"' ) {
+          // end of string
+          open = 0;
+          delimiters.push('');
+        } else if ( input.charAt(pos) === '[' ) {
+          // begin of quotation
+          open++;
+          delimiters.push('[');
+        } else if ( open && delimiters[delimiters.length-1] === '[' && input.charAt(pos) === ']' ) {
+          // end of quotation
+          open--;
+          delimiters.pop();
+        } else if ( input.charAt(pos) === '{' ) {
+          // begin of array
+          open++;
+          delimiters.push('{');
+        } else if ( open && delimiters[delimiters.length-1] === '{' && input.charAt(pos) === '}' ) {
+          // end of array
+          open--;
+          delimiters.pop();
+        } else if ( input.charAt(pos) === ':' ) {
+          //if( pos !== 0 ) {
           //throw Error('word definition must be at the begining !')
-        //}
-        open++;
-        delimiters.push(':');
-      } else if( open && delimiters[delimiters.length-1] === ':' && input.charAt(pos) === ';' ) {
-        // end of definition
+          //}
+          open++;
+          delimiters.push(':');
+        } else if ( input.charAt(pos) === '(' ) {
+          // begin of comment
+          open++;
+          delimiters.push('(');
+          continue;
+        } else if( open && delimiters[delimiters.length-1] === ':' && input.charAt(pos) === ';' ) {
+          // end of definition
+          open--;
+          delimiters.pop();
+        } else if( pos >= input.length ) {
+          if( open ) {
+            throw Error('ending word of delimiter '+delimiters[delimiters.length-1]+' not found !');
+          }
+          throw Error('lexer error !');
+        }
+        result.push(input.charAt(pos++));
+      } else if ( open && delimiters[delimiters.length-1] === '(' && input.charAt(pos) === ')' ) {
+        // end of comment
         open--;
         delimiters.pop();
-      } else if( pos >= input.length ) {
-        if( open ) {
-          throw Error('ending word of delimiter '+delimiters[delimiters.length-1]+' not found !');
-        }
-        throw Error('lexer error !');
+        pos++;
+      } else {
+        pos++;// skipping chars
       }
-      result.push(input.charAt(pos++));
     }
   };
 
