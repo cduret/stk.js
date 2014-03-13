@@ -2,6 +2,11 @@
   <head>
     <script type="text/javascript" src="./vendor/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="./vendor/ace-builds/src-min/ace.js"></script>
+    <script type="text/javascript" src="./vendor/pjs/src/p.js"></script>
+    <script type="text/javascript" src="./vendor/parsimmon/src/parsimmon.js"></script>
+    <script type="text/javascript" src="./js/objects.js"></script>
+    <script type="text/javascript" src="./js/tests.js"></script>
+    <script type="text/javascript" src="./js/parser.js"></script>
     <script type="text/javascript" src="./js/stk.js"></script>
     <script type="text/javascript" src="./js/notebook.js"></script>
     <style type="text/css">
@@ -41,22 +46,30 @@
 
       /* contextual menu */
       .show {
-          z-index:1000;
-          position: absolute;
-          background-color:#C0C0C0;
-          border: 1px solid blue;
-          padding: 2px;
-          display: block;
-          margin: 0;
-          list-style-type: none;
-          list-style: none;
-
-
+        z-index:1000;
+        position: absolute;
+        background-color:#C0C0C0;
+        border: 1px solid blue;
+        padding: 2px;
+        display: block;
+        margin: 0;
+        list-style-type: none;
+        list-style: none;
       }
 
       .hide {
-          display: none;
+        display: none;
+      }
 
+      /*.ace_marker-layer > .error {
+        position: absolute;
+        z-index: 4;
+        background: rgb(181, 000, 000);
+      }*/
+
+      .curly-underline {
+        position: absolute;
+        background: url(img/underline.gif) bottom repeat-x;
       }
 
       .show li{list-style: none; }

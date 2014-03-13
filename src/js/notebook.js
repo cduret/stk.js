@@ -15,6 +15,7 @@ var prelude = [': sum 0 [+] fold ;',
 
 var cur_line = 0;
 var editors = [];
+var markers = [];
 
 var new_prompt = function(num) {
   return $('<div class="block"/>').append(
@@ -32,9 +33,9 @@ var setup_editor = function(line) {
   editor.getSession().setUseSoftTabs(true);
   editor.getSession().setTabSize(2);
   editor.renderer.setShowGutter(false);
-  //editor.setKeyboardHandler('ace/keyboard/vim');
+  editor.setKeyboardHandler('ace/keyboard/vim');
 
-  var heightUpdateFunction = function() {
+  var height_update = function() {
     // http://stackoverflow.com/questions/11584061/
     var newHeight =
               editor.getSession().getScreenLength() *
@@ -50,11 +51,21 @@ var setup_editor = function(line) {
   };
 
   // Set initial size to match initial content
-  heightUpdateFunction();
+  height_update();
 
   // Whenever a change happens inside the ACE editor, update
   // the size again
-  editor.getSession().on('change', heightUpdateFunction);
+  editor.getSession().on('change', height_update);
+
+  var remove_marker = function() {
+    var marker = editors[line].marker;
+    if( marker ) {
+      editor.getSession().removeMarker(marker);
+      editors[line].marker = undefined;
+    }
+  };
+
+  editor.getSession().on('change', remove_marker);
 
   editor.commands.addCommand({
     name: 'exec',
@@ -74,7 +85,7 @@ var setup_editor = function(line) {
 
   // add ctrl-m for markdown text
 
-  return editor;
+  return {component: editor, height_update: height_update, remove_mark: remove_marker, marker: undefined};
 };
 
 var setup_cell = function(id, edit, error) {
@@ -102,44 +113,13 @@ var setup_cell = function(id, edit, error) {
   }
 };
 
-/*
-var mouseX = function(evt) {
-  if (evt.pageX) {
-    return evt.pageX;
-  } else if (evt.clientX) {
-    return evt.clientX + (document.documentElement.scrollLeft ?
-        document.documentElement.scrollLeft :
-        document.body.scrollLeft);
-  } else {
-    return null;
-  }
-};
 
-var mouseY = function(evt) {
-  if (evt.pageY) {
-    return evt.pageY;
-  } else if (evt.clientY) {
-    return evt.clientY + (document.documentElement.scrollTop ?
-        document.documentElement.scrollTop :
-        document.body.scrollTop);
-  } else {
-    return null;
-  }
-};
-*/
 
 var add_prompt = function(line) {
   $('body').append( new_prompt(line) );
 
-  /*$('#'+line+'.prompt').click(function(e) {
-    var m = $('#menu');
-    m.removeClass('hide');
-    m.addClass('show');
-    m.css({top: mouseY(e), left: mouseX(e)});
-  });*/
-
   var editor = setup_editor(line);
-  editor.focus();
+  editor.component.focus();
   editors.push(editor);
 };
 
@@ -147,7 +127,10 @@ var remove_prompt = function(line) {
   var editor = editors[line];
   var elt = $('#editor_'+line).parent().remove();
 
-  editor.destroy();
+  editor.component.getSession().off('change', editor.remove_mark);
+  editor.component.getSession().off('change', editor.height_update);
+
+  editor.component.destroy();
 
   if( line+1 < editors.length ) {
     editors = editors.slice(0, line).concat(editors.slice(line+1));
@@ -171,7 +154,7 @@ var eval_cell = (function() {
   };
 
   return function(line) {
-    var code = editors[line].getSession().getValue();
+    var code = editors[line].component.getSession().getValue();
     if( code.trim().length > 0 ) {
       var last_line = (line+1) === cur_line;
       var cell_edit = !last_line || $('#answer_'+line).size() !== 0;
@@ -183,8 +166,86 @@ var eval_cell = (function() {
           add_prompt(cur_line++);
         }
       } catch(ex) {
+        var m, r, c, t, range;
+        var aceRange = ace.require('ace/range').Range;
+
         setup_cell(line, cell_edit, true);
-        io.write(ex.message, true);
+
+        if( ex.syntax_error ) {
+          m = ex.syntax_error.message;
+          r = ex.syntax_error.row;
+          c = ex.syntax_error.col;
+
+          t =  /invalid identifier (.+)/.exec(m);
+          if( t === null ) {
+            t = /invalid string (.+)/.exec(m);
+            if( t === null ) {
+              t = /invalid num (.+)/.exec(m);
+            }
+          }
+          if( t !== null && t.length > 1 ) {
+            range = new aceRange(r, c, r, c+t[1].length);
+          } else {
+            range = new aceRange(r, c, r, c+1);
+          }
+          editors[line].marker = editors[line].component.getSession().addMarker(range, 'curly-underline', m);
+          io.write(m, true);
+        } else if( ex.parse_error ) {
+          m = ex.parse_error.message;
+          r = ex.parse_error.row;
+          c = ex.parse_error.col;
+          range = new aceRange(r, c, r, c+1);
+          editors[line].marker = editors[line].component.getSession().addMarker(range, 'curly-underline', m);
+          io.write(m, true);
+        } else if( ex.resolution_error ) {
+          m = ex.resolution_error.message;
+          r = ex.resolution_error.row;
+          c = ex.resolution_error.col;
+          t = ex.resolution_error.token;
+          range = new aceRange(r, c, r, c+t.length);
+          editors[line].marker = editors[line].component.getSession().addMarker(range, 'curly-underline', m);
+          io.write(m, true);
+        } else if( ex.runtime_error ) {
+          io.write(ex.runtime_error.message, true);
+        } else {//unknow exception
+          io.write(ex, true);
+        }
+        /*
+        var m = /^error at line ([0-9]+) col ([0-9]+) -> (.+)$/mg.exec(ex.message);
+        if( m !== null && m.length > 2) {
+          var num_line = Number(m[1]);
+          var num_col = Number(m[2]);
+          var msg = m[3];
+          var mmsg =  /invalid identifier (.+)/.exec(msg);
+          var aceRange = ace.require('ace/range').Range;
+          var range;
+
+          if( mmsg === null ) {
+            mmsg = /invalid string (.+)/.exec(msg);
+            if( mmsg === null ) {
+              mmsg = /invalid num (.+)/.exec(msg);
+            }
+          }
+
+          if( mmsg !== null && mmsg.length > 1 ) {
+            range = new aceRange(num_line, num_col, num_line, num_col+mmsg[1].length);
+          } else {
+            range = new aceRange(num_line, num_col, num_line, num_col+1);
+          }
+
+          editors[line].marker = editors[line].component.getSession().addMarker(range, 'curly-underline', msg);
+
+          io.write(msg, true);*/
+
+          /*editors[line].getSession().setAnnotations([{
+            row: num_line,
+            col: num_col,
+            text: msg,
+            type: 'error'
+          }]);*/
+        //} else {
+          //io.write(ex.message, true);
+        //}
       }
       $('html, body').animate({scrollTop:$(document).height()}, 'slow');// scroll to bottom
     }
@@ -202,7 +263,7 @@ var remove_cell = function(line) {
 
 $(document).ready(function() {
   Stk.words.clear();
-  Stk.interpret(prelude);
+  //Stk.interpret(prelude);
 
   add_prompt(cur_line++);
 
@@ -213,7 +274,7 @@ $(document).ready(function() {
   $('body').on('rm', function(e, line) {
     if( remove_cell(line) ) {
       cur_line--;
-      editors[editors.length-1].focus();
+      editors[editors.length-1].component.focus();
     }
   });
 

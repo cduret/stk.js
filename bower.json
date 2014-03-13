@@ -6,6 +6,8 @@
     "jq-console": "2.8.0",
     "ace-builds": "1.1.1",
     "d3": "3.4.1",
-    "markdown": "0.6.0-beta1"
+    "markdown": "0.6.0-beta1",
+    "parsimmon" : "https://github.com/jayferd/parsimmon.git#v0.3.1",
+    "pjs" : "v5.0.0"
   }
 }

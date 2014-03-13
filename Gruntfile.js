@@ -13,6 +13,7 @@ module.exports = function(grunt) {
           camelcase: false,
           curly: true,
           eqeqeq: true,
+          evil: true,
           forin: true,
           immed: true,
           ignores: ['src/vendor/**.js'],
@@ -27,6 +28,7 @@ module.exports = function(grunt) {
           undef: true,
           unused: false,
           trailing: true,
+          withstmt: true,
           maxlen: 520,
           globals: {
             $: false,

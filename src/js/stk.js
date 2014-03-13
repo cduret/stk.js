@@ -1,3 +1,5 @@
+/* global Parser */
+/*jshint -W083 */
 var Stk = (function() {
   var tests = [ '{1 2} {1 2} = assert',
                 '{1 2 3} length 3 = assert',
@@ -17,17 +19,14 @@ var Stk = (function() {
                 '{1 2 3} [1 +] map {2 3 4} = assert',
                 '{1 2 3} 8 [+] fold 14 = assert',
                 '[dup * 1 +] [[1 +] [id] ifnumber] map 5 swap i 27 = assert',
-                '5 [ 1 = ] [ ] [ dup pred ] [ * ] linrec 120 = assert',
+                '5 [1 =] [] [dup pred] [*] linrec 120 = assert',
                 '5 [1] [*] primrec 120 = assert',
                 '12 [small] [] [pred dup pred] [+] binrec 144 = assert'
-               ].join('\n');
+               ];
 
   var stack = [];
-
   var dictionnary = {};
-
   var words;
-
 
   var push = function(e) {
     stack.push(e);
@@ -35,7 +34,11 @@ var Stk = (function() {
 
   var pop = function() {
     if( stack.length === 0 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     var e = stack.pop();
     return e;
@@ -43,14 +46,22 @@ var Stk = (function() {
 
   var peek = function() {
     if( stack.length === 0 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     return stack[stack.length-1];
   };
 
   var add = function() {
     if( stack.length < 2 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     var a = stack.pop();
     var b = stack.pop();
@@ -59,7 +70,11 @@ var Stk = (function() {
 
   var sub = function() {
     if( stack.length < 2 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     var b = stack.pop();
     var a = stack.pop();
@@ -68,7 +83,11 @@ var Stk = (function() {
 
   var mul = function() {
     if( stack.length < 2 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     var a = stack.pop();
     var b = stack.pop();
@@ -77,7 +96,11 @@ var Stk = (function() {
 
   var div = function() {
     if( stack.length < 2 ) {
-      throw Error('Stack underflow');
+      throw {
+        runtime_error: {
+          message: 'Stack underflow'
+        }
+      };
     }
     var a = stack.pop();
     var b = stack.pop();
@@ -120,7 +143,6 @@ var Stk = (function() {
     }
 
     var i;
-
     for(i=0;i<fragments.length;i++) {
       if( typeof(fragments[i]) === 'function' ) {
         fragments[i](io);
@@ -148,6 +170,9 @@ var Stk = (function() {
       return ['['].concat(e.quotation.map(word_to_string)).concat(']').join(' ');
     } else if( e.reference ) {
       return find_name(dictionnary, e);
+    } else if( e.tuple ) {
+      return 'T{ ' + e.tuple + ' ' + Object.getOwnPropertyNames(e.fields)
+        .map(function(p) { return ''+word_to_string(e.fields[p]); }).join(' ')+' }';
     } else if( e instanceof Array ) {
       return '{ '+e.map(word_to_string).join(' ')+' }';
     } else if( (typeof(e) === 'string') ) {
@@ -214,7 +239,11 @@ var Stk = (function() {
       } else if( typeof(a) === 'number' && typeof(b) === 'number' ) {
         push( a & b );
       } else {
-        throw Error('boolean or number are required !');
+        throw {
+          runtime_error: {
+            message: 'boolean or number are required !'
+          }
+        };
       }
     },
     or: function() {
@@ -225,7 +254,11 @@ var Stk = (function() {
       } else if( typeof(a) === 'number' && typeof(b) === 'number' ) {
         push( a | b );
       } else {
-        throw Error('boolean or number are required !');
+        throw {
+          runtime_error: {
+            message: 'boolean or number are required !'
+          }
+        };
       }
     },
     xor: function() {
@@ -236,7 +269,11 @@ var Stk = (function() {
       } else if( typeof(a) === 'number' && typeof(b) === 'number' ) {
         push( a ^ b );
       } else {
-        throw Error('boolean or number are required !');
+        throw {
+          runtime_error: {
+            message: 'boolean or number are required !'
+          }
+        };
       }
     },
     not: function() {
@@ -244,7 +281,11 @@ var Stk = (function() {
       if( typeof(a) === 'boolean' ) {
         push( !a );
       } else {
-        throw Error('boolean value is required !');
+        throw {
+          runtime_error: {
+            message: 'boolean value is required !'
+          }
+        };
       }
     },
     '>': function() {
@@ -254,7 +295,11 @@ var Stk = (function() {
           typeof(a) === 'string' && typeof(b) === 'string' ) {
         push( a > b );
       } else {
-        throw Error('number values are required !');
+        throw {
+          runtime_error: {
+            message: 'number values are required !'
+          }
+        };
       }
     },
     '>=': function() {
@@ -264,7 +309,11 @@ var Stk = (function() {
           typeof(a) === 'string' && typeof(b) === 'string' ) {
         push( a >= b );
       } else {
-        throw Error('number values are required !');
+        throw {
+          runtime_error: {
+            message: 'number values are required !'
+          }
+        };
       }
     },
     '=': function() {
@@ -279,7 +328,11 @@ var Stk = (function() {
           typeof(a) === 'string' && typeof(b) === 'string' ) {
         push( a !== b );
       } else {
-        throw Error('number values are required !');
+        throw {
+          runtime_error: {
+            message: 'number values are required !'
+          }
+        };
       }
     },
     '<=': function() {
@@ -289,7 +342,11 @@ var Stk = (function() {
           typeof(a) === 'string' && typeof(b) === 'string' ) {
         push( a <= b );
       } else {
-        throw Error('number values are required !');
+        throw {
+          runtime_error: {
+            message: 'number values are required !'
+          }
+        };
       }
     },
     '<': function() {
@@ -299,7 +356,11 @@ var Stk = (function() {
           typeof(a) === 'string' && typeof(b) === 'string' ) {
         push( a < b );
       } else {
-        throw Error('number values are required !');
+        throw {
+          runtime_error: {
+            message: 'number values are required !'
+          }
+        };
       }
     },
     choice: function() {
@@ -307,7 +368,11 @@ var Stk = (function() {
       var t = pop();
       var b = pop();
       if( typeof(b) !== 'boolean' ) {
-        throw Error('elt is not a boolean !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a boolean !'
+          }
+        };
       }
       if( b ) {
         push( t );
@@ -322,14 +387,22 @@ var Stk = (function() {
       var stack_backup = stack.slice();
 
       if( !f.quotation || !t.quotation || !q.quotation  ) {
-        throw Error('elts must be quotations !');
+        throw {
+          runtime_error: {
+            message: 'elts must be quotations !'
+          }
+        };
       }
       push( q );
       words.i(io);
       var b = pop();
 
       if( typeof(b) !== 'boolean' ) {
-        throw Error('return value must be a boolean !');
+        throw {
+          runtime_error: {
+            message: 'return value must be a boolean !'
+          }
+        };
       }
 
       stack = stack_backup;
@@ -345,17 +418,29 @@ var Stk = (function() {
     assert: function() {
       var a = pop();
       if( typeof(a) !== 'boolean' ) {
-        throw Error('value is not of type boolean !');
+        throw {
+          runtime_error: {
+            message: 'value is not of type boolean !'
+          }
+        };
       }
 
       if( !a  ) {
-        throw Error('Assert Error !');
+        throw {
+          runtime_error: {
+            message: 'Assert Error !'
+          }
+        };
       }
     },
     length: function() {
       var a = pop();
       if( !is_sequence(a) ) {
-        throw Error('elt is not a sequence !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a sequence !'
+          }
+        };
       }
       if( a.quotation ) {
         push( a.quotation.length );
@@ -366,7 +451,11 @@ var Stk = (function() {
     small: function() {
       var a = pop();
       if( typeof(a) === 'boolean' ) {
-        throw Error('elt should not be a boolean !');
+        throw {
+          runtime_error: {
+            message: 'elt should not be a boolean !'
+          }
+        };
       }
       if( a.quotation ) {
         push( (a.quotation.length === 0) || (a.quotation.length === 1) );
@@ -379,14 +468,22 @@ var Stk = (function() {
     succ: function() {
       var a = pop();
       if( typeof(a) !== 'number' ) {
-        throw Error('elt is not a number !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a number !'
+          }
+        };
       }
       push( ++a );
     },
     pred: function() {
       var a = pop();
       if( typeof(a) !== 'number' ) {
-        throw Error('elt is not a number !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a number !'
+          }
+        };
       }
       push( --a );
     },
@@ -444,7 +541,11 @@ var Stk = (function() {
       var q = pop();
       var x = pop();
       if( !q.quotation ) {
-        throw Error('elt is not a quotation !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a quotation !'
+          }
+        };
       }
       interpret(q.quotation, io);
       push(x);
@@ -452,7 +553,11 @@ var Stk = (function() {
     i: function(io) {
       var q = pop();
       if( !q.quotation ) {
-        throw Error('elt is not a quotation !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a quotation !'
+          }
+        };
       }
       interpret(q.quotation, io);
     },
@@ -460,28 +565,48 @@ var Stk = (function() {
       var q = pop();
       var n = pop();
       if( typeof(n) !== 'number' ) {
-        throw Error('index is not a number !');
+        throw {
+          runtime_error: {
+            message: 'index is not a number !'
+          }
+        };
       }
       if( !is_sequence(q) ) {
-        throw Error('elt is not a sequence !');
+        throw {
+          runtime_error: {
+            message: 'elt is not a sequence !'
+          }
+        };
       }
       if( q.quotation ) {
         if( n < q.quotation.length ) {
           interpret(q.quotation[n], io);
         } else {
-          throw Error('index out of range !');
+          throw {
+            runtime_error: {
+              message: 'index out of range !'
+            }
+          };
         }
       } else if( q instanceof Array ) {
         if( n < q.length ) {
           push( q[n] );
         } else {
-          throw Error('index out of range !');
+          throw {
+            runtime_error: {
+              message: 'index out of range !'
+            }
+          };
         }
       } else if( typeof(q) === 'string' ) {
         if( n < q.length ) {
           push( q.charAt(n) );
         } else {
-          throw Error('index out of range !');
+          throw {
+            runtime_error: {
+              message: 'index out of range !'
+            }
+          };
         }
       }
     },
@@ -489,7 +614,11 @@ var Stk = (function() {
       var b = pop();
       var a = pop();
       if( !is_sequence(a) || !is_sequence(b) ) {
-        throw Error('elts should be sequences !');
+        throw {
+          runtime_error: {
+            message: 'elts should be sequences !'
+          }
+        };
       }
       if( a.quotation && b.quotation ) {
         var result = a.quotation.concat(b.quotation);
@@ -499,14 +628,48 @@ var Stk = (function() {
       } else if( typeof(a) === 'string' && typeof(b) === 'string' ) {
         push(a.concat(b));
       } else {
-        throw Error('elts should have same type !');
+        throw {
+          runtime_error: {
+            message: 'elts should have same type !'
+          }
+        };
+      }
+    },
+    enconcat: function() {
+      var t = pop();
+      var s = pop();
+      var x = pop();
+      if( !is_sequence(s) || !is_sequence(t) ) {
+        throw {
+          runtime_error: {
+            message: 'elts should be sequences !'
+          }
+        };
+      }
+      if( t.quotation && s.quotation ) {
+        var result = s.quotation.concat([x].concat(t.quotation));
+        push({ quotation: result });
+      } else if( s instanceof Array && t instanceof Array ) {
+        push(s.concat([x].concat(t)));
+      //} else if( typeof(a) === 'string' && typeof(b) === 'string' ) {// what is a char ?
+        //push(a.concat(b));
+      } else {
+        throw {
+          runtime_error: {
+            message: 'elts should have same type !'
+          }
+        };
       }
     },
     cons: function() { // faire cons pour un string
       var b = pop();
       var a = pop();
       if( !(b instanceof Array) && !b.quotation ) {
-        throw Error('second elt should be a quotation or an array !');
+        throw {
+          runtime_error: {
+            message: 'second elt should be a quotation or an array !'
+          }
+        };
       }
       if( b.quotation ) {
         var result = [a].concat(b.quotation);
@@ -519,7 +682,11 @@ var Stk = (function() {
       var a = pop();
       var b = pop();
       if( !(b instanceof Array) && !b.quotation ) {
-        throw Error('second elt should be a quotation or an array !');
+        throw {
+          runtime_error: {
+            message: 'second elt should be a quotation or an array !'
+          }
+        };
       }
       if( b.quotation ) {
         var result = [a].concat(b.quotation);
@@ -531,11 +698,19 @@ var Stk = (function() {
     uncons: function(io) { // faire uncons pour un string
       var first, rest, a = pop();
       if( !(a instanceof Array) && !a.quotation ) {
-        throw Error('second elt should be a quotation or an array !');
+        throw {
+          runtime_error: {
+            message: 'second elt should be a quotation or an array !'
+          }
+        };
       }
       if( a.quotation ) {
         if( a.quotation.length < 1 ) {
-          throw Error('uncons on empty quotation !');
+          throw {
+            runtime_error: {
+              message: 'uncons on empty quotation !'
+            }
+          };
         }
         first = a.quotation[0];
         rest = a.quotation.slice(1);
@@ -543,7 +718,11 @@ var Stk = (function() {
         push({ quotation: rest });
       } else if( a instanceof Array ) {
         if( a.length < 1 ) {
-          throw Error('uncons on empty array !');
+          throw {
+            runtime_error: {
+              message: 'uncons on empty array !'
+            }
+          };
         }
         first = a[0];
         push( first );
@@ -553,17 +732,29 @@ var Stk = (function() {
     first: function(io) { // faire first pour un string
       var first, a = pop();
       if( !(a instanceof Array) && !a.quotation ) {
-        throw Error('elt should be a quotation or an array !');
+        throw {
+          runtime_error: {
+            message: 'elt should be a quotation or an array !'
+          }
+        };
       }
       if( a.quotation ) {
         if( a.quotation.length < 1 ) {
-          throw Error('first on empty quotation !');
+          throw {
+            runtime_error: {
+              message: 'first on empty quotation !'
+            }
+          };
         }
         first = a.quotation[0];
         interpret(first, io);
       } else if( a instanceof Array ) {
         if( a.length < 1 ) {
-          throw Error('first on empty array !');
+          throw {
+            runtime_error: {
+              message: 'first on empty array !'
+            }
+          };
         }
         first = a[0];
         push( first );
@@ -574,10 +765,18 @@ var Stk = (function() {
       var q = pop();
       var a = pop();
       if( !(a instanceof Array) && !a.quotation ) {
-        throw Error('first elt should be an array or a quotation !');
+        throw {
+          runtime_error: {
+            message: 'first elt should be an array or a quotation !'
+          }
+        };
       }
       if( !q.quotation ) {
-        throw Error('second elt should be a quotation !');
+        throw {
+          runtime_error: {
+            message: 'second elt should be a quotation !'
+          }
+        };
       }
       var array;
       if( a instanceof Array ) {
@@ -603,11 +802,19 @@ var Stk = (function() {
       var q = pop();
       var v0 = pop();
       var a = pop();
-      if( (v0 instanceof Array) || v0.quotation ) {
-        throw Error('v0 must be a primitive value !');
-      }
+      /*if( (v0 instanceof Array) || v0.quotation ) {
+        throw {
+          runtime_error: {
+            message: 'v0 must be a primitive value !'
+          }
+        };
+      }*/
       if( !(a instanceof Array) || !q.quotation ) {
-        throw Error('elts should be an array and a quotation !');
+        throw {
+          runtime_error: {
+            message: 'elts should be an array and a quotation !'
+          }
+        };
       }
       var v = v0;
       for(i=0;i<a.length;i++) {
@@ -625,11 +832,19 @@ var Stk = (function() {
       var a = pop();
 
       if( !fq.quotation || !tq.quotation ) {
-        throw Error('elts must quotations !');
+        throw {
+          runtime_error: {
+            message: 'elts must quotations !'
+          }
+        };
       }
 
       if( (a instanceof Array) || a.quotation ) {
-        throw Error('elt must be a primitive value !');
+        throw {
+          runtime_error: {
+            message: 'elt must be a primitive value !'
+          }
+        };
       }
 
       push( a );
@@ -647,11 +862,19 @@ var Stk = (function() {
       var x = peek();
 
       if( !qc.quotation || !qi.quotation ) {
-        throw Error('two elts must be a quotation !');
+        throw {
+          runtime_error: {
+            message: 'two elts must be a quotation !'
+          }
+        };
       }
 
       if( typeof(x) !== 'number' ) {
-        throw Error('first element must be a number !');
+        throw {
+          runtime_error: {
+            message: 'first element must be a number !'
+          }
+        };
       }
 
       while(x>0) {
@@ -672,7 +895,11 @@ var Stk = (function() {
       var qt = pop();
       var qp = pop();
       if( !qr2.quotation || !qr1.quotation || !qt.quotation || !qp.quotation ) {
-        throw Error('all elts must be a quotation !');
+        throw {
+          runtime_error: {
+            message: 'all elts must be a quotation !'
+          }
+        };
       }
 
       var calls = [];
@@ -686,7 +913,11 @@ var Stk = (function() {
               words.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
-                throw Error('result of first quotation must be a boolean !');
+                throw {
+                  runtime_error: {
+                    message: 'result of first quotation must be a boolean !'
+                  }
+                };
               }
               if( b ) {
                 push(qt);
@@ -713,7 +944,11 @@ var Stk = (function() {
       var qt = pop();
       var qp = pop();
       if( !qr2.quotation || !qr1.quotation || !qt.quotation || !qp.quotation ) {
-        throw Error('all elts must be a quotation !');
+        throw {
+          runtime_error: {
+            message: 'all elts must be a quotation !'
+          }
+        };
       }
 
       var result;
@@ -732,7 +967,11 @@ var Stk = (function() {
               words.i(io);
               var b = pop();
               if( typeof(b) !== 'boolean' ) {
-                throw Error('result of first quotation must be a boolean !');
+                throw {
+                  runtime_error: {
+                    message: 'result of first quotation must be a boolean !'
+                  }
+                };
               }
               if( b ) {
                 push(qt);
@@ -767,138 +1006,172 @@ var Stk = (function() {
     }
   };
 
-  var mk_object = function(type, value) {
-    return { type: type, value: value };
-  };
+  var interpret_ast = function(program) {
+    var a, i, fragments = [];
+    var set_property = function(o, f) {
+      return Object.defineProperty(o, f.identifier, {enumerable: true, writable: true});
+    };
+    for(i=0;i<program.length;i++) {
+      a = program[i];
+      if( a.definition ) {
+        var ref = {reference: []};
+        dictionnary[ a.definition.identifier ] = ref;
+        ref.reference = interpret_ast(a.body);
+      //} else if( a.use ) {
+      } else if( a.tuple ) {
+        // ctor
+        dictionnary['<'+a.tuple.identifier+'>'] = (function(a) {
+          return function() {
+            push({
+              tuple: a.tuple.identifier,
+              fields: a.fields.reduce(set_property, {})
+            });
+          };
+        })(a);
+        // accessors
+        var j;
+        for(j=0;j<a.fields.length;j++) {
+          dictionnary['>>'+a.fields[j].identifier] = (function(a, j) {
+            return function() {
+              var elt = pop();
+              var struct = pop();
 
-  var next_token = function(input, pos) {
-    var open = 0, delimiters = [];
-    pos = pos || 0;
-    var result = [];
-    if( pos >= input.length ) {
-      return ['', -1];
-    }
-    while ( true ) {
-      if( !delimiters.length || delimiters[delimiters.length-1] !== '(' ) {
-        if( !open && (input.charAt(pos) === ' ' || input.charAt(pos) === '\n') && result.length === 0 ) {
-          // skip whitespaces and return lines
-          pos++;
-          continue;
-        } else if( !open && (pos === input.length || input.charAt(pos) === ' ' || input.charAt(pos) === '\n') ) {
-          // end of token
-          var new_pos = (pos === input.length)?-1:pos+1;
-          return [result.join(''), new_pos];
-        } else if ( !open && input.charAt(pos) === '"' ) {
-          // begin of string
-          open++;
-          delimiters.push('"');
-        } else if ( open && delimiters[delimiters.length-1] === '"' && input.charAt(pos) === '"' ) {
-          // end of string
-          open = 0;
-          delimiters.push('');
-        } else if ( input.charAt(pos) === '[' ) {
-          // begin of quotation
-          open++;
-          delimiters.push('[');
-        } else if ( open && delimiters[delimiters.length-1] === '[' && input.charAt(pos) === ']' ) {
-          // end of quotation
-          open--;
-          delimiters.pop();
-        } else if ( input.charAt(pos) === '{' ) {
-          // begin of array
-          open++;
-          delimiters.push('{');
-        } else if ( open && delimiters[delimiters.length-1] === '{' && input.charAt(pos) === '}' ) {
-          // end of array
-          open--;
-          delimiters.pop();
-        } else if ( input.charAt(pos) === ':' ) {
-          //if( pos !== 0 ) {
-          //throw Error('word definition must be at the begining !')
-          //}
-          open++;
-          delimiters.push(':');
-        } else if ( input.charAt(pos) === '(' ) {
-          // begin of comment
-          open++;
-          delimiters.push('(');
-          continue;
-        } else if( open && delimiters[delimiters.length-1] === ':' && input.charAt(pos) === ';' ) {
-          // end of definition
-          open--;
-          delimiters.pop();
-        } else if( pos >= input.length ) {
-          if( open ) {
-            throw Error('ending word of delimiter '+delimiters[delimiters.length-1]+' not found !');
-          }
-          throw Error('lexer error !');
+              if( !struct.tuple ) {
+                throw {
+                  runtime_error: {
+                    message: 'first argument is not a tuple !'
+                  }
+                };
+              } else if( struct.tuple !== a.tuple.identifier ) {
+                throw {
+                  runtime_error: {
+                    message: 'tuple mismatch error !'
+                  }
+                };
+              }
+              struct.fields[a.fields[j].identifier] = elt;
+
+              push(struct);
+            };
+          })(a, j);
         }
-        result.push(input.charAt(pos++));
-      } else if ( open && delimiters[delimiters.length-1] === '(' && input.charAt(pos) === ')' ) {
-        // end of comment
-        open--;
-        delimiters.pop();
-        pos++;
-      } else {
-        pos++;// skipping chars
-      }
-    }
-  };
+        for(j=0;j<a.fields.length;j++) {
+          dictionnary[a.fields[j].identifier+'>>'] = (function(a, j) {
+            return function() {
+              var struct = pop();
 
-  var lexer;
+              if( !struct.tuple ) {
+                throw {
+                  runtime_error: {
+                    message: 'first argument is not a tuple !'
+                  }
+                };
+              } else if( struct.tuple !== a.tuple.identifier ) {
+                throw {
+                  runtime_error: {
+                    message: 'tuple mismatch error !'
+                  }
+                };
+              }
 
-  var lex_token = function(token) {
-    if( token.charAt(0) === '"' && token.charAt(token.length-1) === '"' ) {
-      return token.substring(1, token.length-1);
-    } else if( token.charAt(0) === '[' && token.charAt(token.length-1) === ']' ) {
-      return {quotation: lexer(token.substring(1, token.length-1))};
-    } else if( token.charAt(0) === '{' && token.charAt(token.length-1) === '}' ) {
-      return lexer(token.substring(1, token.length-1));
-    } else if( token === 't' ) {
-      return true;
-    } else if( token === 'f' ) {
-      return false;
-    } else if( !isNaN(token) ) {
-      return Number(token);
-    } else if( words[token] ) {
-      return words[token];
-    } else if( dictionnary[token] ) {
-      return dictionnary[token];
-    }
-  };
-
-  lexer = function(input) {
-    var result = [];
-    var next = 0;
-    while ( next !== -1 ) {
-      var token = next_token(input, next);
-      var s = token[0].trim();
-      if( s.length > 0 ) {
-        if( s.charAt(0) === ':' && s.charAt(s.length-1) === ';' ) {
-          var body = s.substring(1, s.length-1);
-          var name = next_token(body);
-          var ref = { reference: [] };
-          dictionnary[name[0]] = ref;
-          ref.reference = lexer(body.substring(name[1], body.length-1));
+              push( struct.fields[a.fields[j].identifier] );
+            };
+          })(a, j);
+        }
+      } else if( a.string !== undefined ) {
+        fragments.push(a.string);
+      } else if( a.number !== undefined ) {
+        fragments.push(a.number);
+      } else if( a.array ) {
+        fragments.push( interpret_ast(a.array) );
+      } else if( a.quotation ) {
+        fragments.push( {quotation: interpret_ast(a.quotation)} );
+      } else if( a.identifier ) {
+        if( a.identifier === 't' ) {
+          fragments.push( true );
+        } else if( a.identifier === 'f' ) {
+          fragments.push( false );
+        } else if( words[a.identifier] ) {
+          fragments.push( words[a.identifier] );
+        } else if( dictionnary[a.identifier] ) {
+          fragments.push( dictionnary[a.identifier] ) ;
         } else {
-          var t = lex_token(s);
-          if( t !== undefined ) {
-            result.push(t);
-          } else {
-            throw Error('token '+s+' not found !');
-          }
+          throw {
+            runtime_error: {
+              message: 'token '+a.identifier+' not found !'
+            }
+          };
         }
       }
-      next = token[1];
     }
-    return result;
+    return fragments;
   };
 
   var interpret_string = function(code, io) {
-    interpret( lexer(code), io );
+    //interpret( lexer(code), io );
+    var find_token = function(token) {
+      var i, j, line = 0, col = 0;
+      for(i=0;i<code.length-token.length+1;i++) {
+        var found = true;
+        for(j=0;j<token.length;j++) {
+          if( code.charAt(j+i) !== '\n' ) {
+            found = found && code.charAt(j+i) === token[j];
+          } else {
+            found = false;
+            break;
+          }
+        }
+        if( !found ) {
+          if( code.charAt(i) === '\n' ) {
+            line++;
+            col = 0;
+          } else {
+            col++;
+          }
+        } else {
+          return {line: line, col: col};
+        }
+      }
+    };
+
+    var result = Parser.parse(code);
+
+    try {
+      interpret( interpret_ast(result.program), io );
+    } catch(e) {
+      if(e.runtime_error) {
+        var m = /^token (.+) not found !$/.exec(e.runtime_error.message);
+        if( m !== null && m.length > 1 ) {
+          var pos = find_token(m[1]);
+          if( pos ) {
+            throw {
+              resolution_error: {
+                row: pos.line,
+                col: pos.col,
+                token: m[1],
+                message: e.runtime_error.message
+              }
+            };
+          }
+        }
+      }
+      throw e;
+    }
   };
 
-  interpret_string(tests);
+  var test;
+  try {
+    for(test=0;test<tests.length;test++) {
+      interpret_string(tests[test]);
+    }
+  } catch(e) {
+    var m = e.syntax_error?e.syntax_error.message:e.parse_error?e.parse_error.message:e.runtime_error?e.runtime_error.message:undefined;
+    if( m ) {
+      console.error('test['+test+']: '+m);
+    } else {
+      console.error('test['+test+']: unknown error ! ('+e+')');
+    }
+  }
 
   return {
     stack: function() { return stack; },
@@ -906,11 +1179,7 @@ var Stk = (function() {
     print_stack: words['.s'],
     words: words,
     word_to_string: word_to_string,
-    interpret: interpret_string,
-    lexer: lexer,
-    lex_token: lex_token,
-    next_token: next_token
+    interpret: interpret_string
   };
-
 
 })();
